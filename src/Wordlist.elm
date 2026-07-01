@@ -1,4 +1,4 @@
-module Wordlist exposing (words, defaultWord)
+module Wordlist exposing (words, defaultWord, isValidWord)
 
 defaultWord : String
 defaultWord = "CRANE"

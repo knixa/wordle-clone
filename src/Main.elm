@@ -82,9 +82,47 @@ update msg model =
 
                         _ -> ( model, Cmd.none)
                             
-        PressedEnter -> (model, Cmd.none)
+        PressedEnter -> 
+            if model.gameState /= Playing then (model, Cmd.none)
+            else if String.length model.currentGuess < wordLength then
+                ( { model | message = Just "Not enough letters" }, Cmd.none )
+            else 
+                let
+                    evaluated = evaluateGuess model.answer model.currentGuess
+                    
+                    newGuesses = model.guesses ++ [ evaluated ]
+                    
+                    newState =
+                        if hasWon newGuesses then
+                            Won
+                        else if hasLost newGuesses then
+                            Lost
+                        else
+                            Playing
+                            
+                    message =
+                        case newState of
+                            Won ->
+                                Just "Brilliant!"
+                            
+                            Lost ->
+                                Just ("The word was " ++ model.answer)
+                            
+                            Playing -> Nothing
+                            
+                in
+                ( { model
+                    | guesses = newGuesses
+                    , currentGuess = ""
+                    , gameState = newState
+                    , shake = False
+                    , message = message
+                    }
+                    , Cmd.none
+                )    
+                            
+                    
             
-
         PressedBackspace ->
             if model.gameState /= Playing then
                 ( model, Cmd.none )

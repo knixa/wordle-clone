@@ -2,6 +2,7 @@ module Game exposing
     ( GameState(..)
     , LetterState(..) 
     , EvaluatedGuess
+    , evaluateGuess
     , hasWon
     , hasLost
     , maxGuesses
@@ -30,6 +31,49 @@ type GameState
 type alias EvaluatedGuess =
     List (Char, LetterState)
     
+evaluateGuess : String -> String -> EvaluatedGuess
+evaluateGuess answer guess =
+    let
+        answerChars = String.toList (String.toUpper answer)
+        
+        guessChars = String.toList (String.toUpper guess)
+        
+        correctPass = 
+            List.map2 (
+                \a g ->
+                    if a == g then ( g, Just Correct )
+                    else ( g, Nothing )
+            ) answerChars guessChars
+            
+        correctChars =
+            List.map2 (\a g -> if a == g then Just a else Nothing)
+                answerChars
+                guessChars
+                |> List.filterMap identity
+       
+        remainingBudget =
+            List.foldl (
+                \c budget ->
+                    removeFirst c budget
+            ) answerChars correctChars
+            
+        (_, finalStates ) =
+            List.foldl (\( g, maybeState ) (budget, acc) ->
+                case maybeState of
+                    Just state ->
+                        ( budget, acc ++ [ ( g, state) ] )
+                    
+                    Nothing ->
+                        if List.member g budget then
+                            ( removeFirst g budget, acc ++ [ (g, Present ) ] )
+                        else
+                            ( budget, acc ++ [ ( g, Absent ) ] )
+                )
+                ( remainingBudget, [] )
+                correctPass
+    in
+    finalStates
+        
 
 removeFirst : a -> List a -> List a
 removeFirst target list =
